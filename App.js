@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo, useCallback} from 'react';
+import React, {useState, useEffect, useMemo, useCallback, memo} from 'react';
 import {
   View,
   Text,
@@ -57,6 +57,40 @@ const PostDetails = ({postId}) => {
   );
 };
 
+const Item = memo(({item, onSelect}) => {
+  const computedResult = useMemo(() => {
+    const start = performance.now();
+    const result = item.id * 2;
+    const end = performance.now();
+    console.log(
+      `Heavy computation for item ${item.id} took ${end - start} milliseconds`,
+    );
+    return result;
+  }, [item.id]);
+
+  return (
+    <TouchableOpacity
+      onPress={() => onSelect(item)}
+      style={{
+        padding: 12,
+        borderWidth: 1,
+        borderColor: '#32cd32',
+        marginBottom: 8,
+        borderRadius: 12,
+      }}>
+      <Text style={{fontSize: 12, color: '#32cd32', fontWeight: 'bold'}}>
+        ID: {item.id}
+      </Text>
+      <Text style={{fontSize: 14, color: '#32cd32', fontWeight: 'bold'}}>
+        Title: {item.title}
+      </Text>
+      <Text style={{fontSize: 14, color: '#32cd32', fontWeight: 'bold'}}>
+        Computed Result: {computedResult}
+      </Text>
+    </TouchableOpacity>
+  );
+});
+
 const App = () => {
   const [data, setData] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -77,49 +111,8 @@ const App = () => {
     }
   };
 
-  const heavyComputation = useMemo(
-    () => item => {
-      const start = performance.now();
-      const result = item.id * 2;
-      const end = performance.now();
-      console.log(
-        `Heavy computation for item ${item.id} took ${
-          end - start
-        } milliseconds`,
-      );
-      return result;
-    },
-    [],
-  );
-
   const onPostSelect = item => {
     setSelectedItem(item);
-  };
-
-  const renderItem = ({item}) => {
-    const computedResult = heavyComputation(item);
-
-    return (
-      <TouchableOpacity
-        onPress={() => onPostSelect(item)}
-        style={{
-          padding: 12,
-          borderWidth: 1,
-          borderColor: '#32cd32',
-          marginBottom: 8,
-          borderRadius: 12,
-        }}>
-        <Text style={{fontSize: 12, color: '#32cd32', fontWeight: 'bold'}}>
-          ID: {item.id}
-        </Text>
-        <Text style={{fontSize: 14, color: '#32cd32', fontWeight: 'bold'}}>
-          Title: {item.title}
-        </Text>
-        <Text style={{fontSize: 14, color: '#32cd32', fontWeight: 'bold'}}>
-          Computed Result: {computedResult}
-        </Text>
-      </TouchableOpacity>
-    );
   };
 
   const renderDetails = () => {
@@ -133,7 +126,7 @@ const App = () => {
         <FlatList
           ListHeaderComponent={renderDetails}
           data={data}
-          renderItem={renderItem}
+          renderItem={({item}) => <Item item={item} onSelect={onPostSelect} />}
           keyExtractor={item => item.id.toString()}
         />
       ) : (
